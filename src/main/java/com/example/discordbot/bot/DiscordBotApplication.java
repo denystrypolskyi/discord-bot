@@ -6,7 +6,7 @@ import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
 @SpringBootApplication
-@EntityScan(basePackages = "com.example.discordbot.model")  // <-- dodaj to
+@EntityScan(basePackages = "com.example.discordbot.model")
 @EnableJpaRepositories(basePackages = "com.example.discordbot.repository")
 public class DiscordBotApplication {
     public static void main(String[] args) {

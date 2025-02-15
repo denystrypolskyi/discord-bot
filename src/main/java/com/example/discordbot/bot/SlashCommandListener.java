@@ -3,7 +3,6 @@ package com.example.discordbot.bot;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.time.format.ResolverStyle;
 
 import org.springframework.stereotype.Component;
 
@@ -92,7 +91,6 @@ public class SlashCommandListener extends ListenerAdapter {
                 
                 String userId = event.getUser().getId();
                 
-                // DEBUG: Log the parsed date
                 System.out.println("Attempting to delete hours for date: " + dateToDelete);
         
                 int deletedCount = workHoursRepository.deleteByUserIdAndDate(userId, dateToDelete);
@@ -104,7 +102,7 @@ public class SlashCommandListener extends ListenerAdapter {
                 }
             } catch (Exception e) {
                 event.reply("⚠️ Error: " + e.getMessage()).queue();
-                System.err.println("Error parsing date: " + e.getMessage());  // Log the exception
+                System.err.println("Error parsing date: " + e.getMessage());  
             }
         }
     }
