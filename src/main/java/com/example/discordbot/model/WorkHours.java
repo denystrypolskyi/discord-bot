@@ -2,10 +2,11 @@ package com.example.discordbot.model;
 
 import jakarta.persistence.*;
 import java.time.Duration;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "work_hours")  // Optional: Defines the table name explicitly
+@Table(name = "work_hours")  // Explicitly defining the table name
 public class WorkHours {
 
     @Id
@@ -13,6 +14,8 @@ public class WorkHours {
     private Long id;
     private String userId;
     private String username;
+    private LocalDate startDay;
+    private LocalDate endDay;
     private LocalDateTime startHour;
     private LocalDateTime endHour;
     private Long hours;
@@ -20,9 +23,11 @@ public class WorkHours {
 
     public WorkHours() {}
 
-    public WorkHours(String userId, String username, LocalDateTime startHour, LocalDateTime endHour, LocalDateTime timestamp) {
+    public WorkHours(String userId, String username, LocalDate startDay, LocalDateTime startHour, LocalDateTime endHour, LocalDateTime timestamp) {
         this.userId = userId;
         this.username = username;
+        this.startDay = startDay;
+        this.endDay = startHour.toLocalDate();  // Default to startDay
         this.startHour = startHour;
         this.endHour = endHour;
         this.hours = calculateHoursBetween();
@@ -53,6 +58,22 @@ public class WorkHours {
         this.username = username;
     }
 
+    public LocalDate getStartDay() {
+        return startDay;
+    }
+
+    public void setStartDay(LocalDate startDay) {
+        this.startDay = startDay;
+    }
+
+    public LocalDate getEndDay() {
+        return endDay;
+    }
+
+    public void setEndDay(LocalDate endDay) {
+        this.endDay = endDay;
+    }
+
     public LocalDateTime getStartHour() {
         return startHour;
     }
@@ -69,11 +90,11 @@ public class WorkHours {
         this.endHour = endHour;
     }
 
-    public int getHours() {
+    public Long getHours() {
         return hours;
     }
 
-    public void setHours(int hours) {
+    public void setHours(Long hours) {
         this.hours = hours;
     }
 
@@ -85,7 +106,7 @@ public class WorkHours {
         this.timestamp = timestamp;
     }
 
-    public long calculateHoursBetween() {
+    private long calculateHoursBetween() {
         if (startHour != null && endHour != null) {
             return Duration.between(startHour, endHour).toHours();
         }

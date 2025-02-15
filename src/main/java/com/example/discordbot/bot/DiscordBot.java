@@ -34,9 +34,11 @@ public class DiscordBot {
         jda.updateCommands().addCommands(
             Commands.slash("workhours", "Log your work hours")
                 .addOption(OptionType.STRING, "day", "Day (DD.MM)", true)
-                .addOption(OptionType.STRING, "starthour", "Start time (HH:mm)", true)
-                .addOption(OptionType.STRING, "endhour", "End time (HH:mm)", true),
-            Commands.slash("totalhours", "Get total logged work hours")
+                .addOption(OptionType.STRING, "starthour", "Start hour (HH:mm)", true)
+                .addOption(OptionType.STRING, "endhour", "End hour (HH:mm)", true),
+            Commands.slash("totalhours", "View your total logged work hours"),
+            Commands.slash("deletehours", "Delete logged work hours for a specific day")
+                .addOption(OptionType.STRING, "day", "Day (DD.MM)", true)
         ).queue();
     }
 
