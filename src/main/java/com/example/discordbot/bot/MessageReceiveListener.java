@@ -1,4 +1,4 @@
-package com.example.discordbot;
+package com.example.discordbot.bot;
 
 import org.springframework.stereotype.Component;
 
