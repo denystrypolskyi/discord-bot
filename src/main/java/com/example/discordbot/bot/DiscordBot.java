@@ -38,7 +38,8 @@ public class DiscordBot {
                 .addOption(OptionType.STRING, "endhour", "End hour (HH:mm)", true),
             Commands.slash("totalhours", "View your total logged work hours"),
             Commands.slash("deletehours", "Delete logged work hours for a specific day")
-                .addOption(OptionType.STRING, "day", "Day (DD.MM)", true)
+                .addOption(OptionType.STRING, "day", "Day (DD.MM)", true),
+            Commands.slash("deleteallhours", "Delete all your logged work hours")
         ).queue();
     }
 

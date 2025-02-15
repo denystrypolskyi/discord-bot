@@ -19,5 +19,11 @@ public interface WorkHoursRepository extends JpaRepository<WorkHours, Long> {
     @Modifying
     @Query("DELETE FROM WorkHours w WHERE w.userId = :userId AND w.startDay = :date")
     int deleteByUserIdAndDate(@Param("userId") String userId, @Param("date") LocalDate date);
+
+    @Modifying
+    @Transactional
+    @Query("DELETE FROM WorkHours w WHERE w.userId = :userId")
+    int deleteAllByUserId(@Param("userId") String userId);
+
 }
 

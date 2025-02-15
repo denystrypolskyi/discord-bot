@@ -105,5 +105,17 @@ public class SlashCommandListener extends ListenerAdapter {
                 System.err.println("Error parsing date: " + e.getMessage());  
             }
         }
+
+        else if (event.getName().equals("deleteallhours")) {
+            String userId = event.getUser().getId();
+            int deletedCount = workHoursRepository.deleteAllByUserId(userId);
+        
+            if (deletedCount > 0) {
+                event.reply("🗑️ Deleted all **" + deletedCount + "** work hour entries.").queue();
+            } else {
+                event.reply("⚠️ No work hours found to delete.").queue();
+            }
+        }
+        
     }
 }
