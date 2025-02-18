@@ -12,18 +12,26 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Repository
 public interface WorkHoursRepository extends JpaRepository<WorkHours, Long> {
-    @Query("SELECT SUM(TIMESTAMPDIFF(MINUTE, w.startHour, w.endHour)) FROM WorkHours w WHERE w.userId = :userId")
+
+    @Query("SELECT SUM(minutes) FROM WorkHours w WHERE w.userId = :userId")
     Long getTotalMinutesWorked(@Param("userId") String userId);
 
-    @Transactional  
+    @Transactional
     @Modifying
-    @Query("DELETE FROM WorkHours w WHERE w.userId = :userId AND w.startDay = :date")
+    @Query("DELETE FROM WorkHours w WHERE w.userId = :userId AND CAST(w.shiftStart AS DATE) = :date")
     int deleteByUserIdAndDate(@Param("userId") String userId, @Param("date") LocalDate date);
 
-    @Modifying
     @Transactional
+    @Modifying
     @Query("DELETE FROM WorkHours w WHERE w.userId = :userId")
     int deleteAllByUserId(@Param("userId") String userId);
 
-}
+    @Query("SELECT SUM(minutes) " +
+            "FROM WorkHours w WHERE w.userId = :userId " +
+            "AND EXTRACT(MONTH FROM w.shiftStart) = :month " +
+            "AND EXTRACT(YEAR FROM w.shiftStart) = :year")
+    Long getTotalMinutesWorkedByMonth(@Param("userId") String userId,
+            @Param("month") int month,
+            @Param("year") int year);
 
+}

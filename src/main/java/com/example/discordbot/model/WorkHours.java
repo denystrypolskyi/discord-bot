@@ -6,7 +6,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "work_hours")  // Explicitly defining the table name
+@Table(name = "work_hours")
 public class WorkHours {
 
     @Id
@@ -14,101 +14,37 @@ public class WorkHours {
     private Long id;
     private String userId;
     private String username;
-    private LocalDate startDay;
-    private LocalDate endDay;
-    private LocalDateTime startHour;
-    private LocalDateTime endHour;
-    private Long hours;
+    private LocalDateTime shiftStart;  
+    private LocalDateTime shiftEnd;    
+    private Long minutes;
     private LocalDateTime timestamp;
 
     public WorkHours() {}
 
-    public WorkHours(String userId, String username, LocalDate startDay, LocalDateTime startHour, LocalDateTime endHour, LocalDateTime timestamp) {
+    public WorkHours(String userId, String username, LocalDateTime shiftStart, LocalDateTime shiftEnd, LocalDateTime timestamp) {
         this.userId = userId;
         this.username = username;
-        this.startDay = startDay;
-        this.endDay = startHour.toLocalDate();  // Default to startDay
-        this.startHour = startHour;
-        this.endHour = endHour;
-        this.hours = calculateHoursBetween();
+        this.shiftStart = shiftStart;
+        this.shiftEnd = shiftEnd;
+        this.minutes = calculateMinutesBetween();
         this.timestamp = timestamp;
     }
 
-    public Long getId() {
-        return id;
+    public LocalDate getShiftDay() {
+        return shiftStart.toLocalDate();
     }
 
-    public void setId(Long id) {
-        this.id = id;
+    public int getShiftMonth() {
+        return shiftStart.getMonthValue();
     }
 
-    public String getUserId() {
-        return userId;
+    public int getShiftYear() {
+        return shiftStart.getYear();
     }
 
-    public void setUserId(String userId) {
-        this.userId = userId;
-    }
-
-    public String getUsername() {
-        return username;
-    }
-
-    public void setUsername(String username) {
-        this.username = username;
-    }
-
-    public LocalDate getStartDay() {
-        return startDay;
-    }
-
-    public void setStartDay(LocalDate startDay) {
-        this.startDay = startDay;
-    }
-
-    public LocalDate getEndDay() {
-        return endDay;
-    }
-
-    public void setEndDay(LocalDate endDay) {
-        this.endDay = endDay;
-    }
-
-    public LocalDateTime getStartHour() {
-        return startHour;
-    }
-
-    public void setStartHour(LocalDateTime startHour) {
-        this.startHour = startHour;
-    }
-
-    public LocalDateTime getEndHour() {
-        return endHour;
-    }
-
-    public void setEndHour(LocalDateTime endHour) {
-        this.endHour = endHour;
-    }
-
-    public Long getHours() {
-        return hours;
-    }
-
-    public void setHours(Long hours) {
-        this.hours = hours;
-    }
-
-    public LocalDateTime getTimestamp() {
-        return timestamp;
-    }
-
-    public void setTimestamp(LocalDateTime timestamp) {
-        this.timestamp = timestamp;
-    }
-
-    private long calculateHoursBetween() {
-        if (startHour != null && endHour != null) {
-            return Duration.between(startHour, endHour).toHours();
+    private long calculateMinutesBetween() {
+        if (shiftStart != null && shiftEnd != null) {
+            return Duration.between(shiftStart, shiftEnd).toMinutes();
         }
         return 0;
     }

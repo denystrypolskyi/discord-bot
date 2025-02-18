@@ -23,99 +23,169 @@ public class SlashCommandListener extends ListenerAdapter {
 
     @Override
     public void onSlashCommandInteraction(SlashCommandInteractionEvent event) {
-        if (event.getName().equals("workhours")) {
-            if (event.getOption("day") == null || event.getOption("starthour") == null || event.getOption("endhour") == null) {
-                event.reply("⚠️ Please provide `day`, `starthour`, and `endhour` in the format `DD.MM HH:mm HH:mm` (e.g., `26.02 16:00 18:00`).").queue();
-                return;
-            }
-        
-            try {
-                String dayInput = event.getOption("day").getAsString();           // e.g., "26.02"
-                String startHourInput = event.getOption("starthour").getAsString(); // e.g., "16:00"
-                String endHourInput = event.getOption("endhour").getAsString();     // e.g., "02:00"
-        
-                // Use the current year automatically
-                int currentYear = LocalDate.now().getYear();
-                String fullStart = dayInput + "." + currentYear + " " + startHourInput;
-                String fullEnd = dayInput + "." + currentYear + " " + endHourInput;
-        
-                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm");
-        
-                LocalDateTime startHour = LocalDateTime.parse(fullStart, formatter);
-                LocalDateTime endHour = LocalDateTime.parse(fullEnd, formatter);
-        
-                LocalDate startDay = startHour.toLocalDate();
-                LocalDate endDay = startDay; // Default to startDay
-        
-                if (endHour.isBefore(startHour)) {
-                    // If endHour is before startHour, assume it’s on the next day
-                    endDay = startDay.plusDays(1);
-                    endHour = endHour.plusDays(1);
-                }
-        
-                String userId = event.getUser().getId();
-                String username = event.getUser().getName();
-        
-                WorkHours workHours = new WorkHours(userId, username, startDay, startHour, endHour, LocalDateTime.now());
-                workHours.setEndDay(endDay); // Set endDay after object creation
-                workHoursRepository.save(workHours);
-        
-                event.reply("✅ Logged work hours for " + username + " on " + dayInput + " from " + startHourInput + " to " + endHourInput).queue();
-            } catch (Exception e) {
-                event.reply("⚠️ Invalid date format! Use `DD.MM HH:mm HH:mm` (e.g., `26.02 16:00 18:00`).").queue();
-            }
+        switch (event.getName()) {
+            case "addhours" -> handleAddHoursCommand(event);
+            case "gethours" -> handleGetHoursCommand(event);
+            case "deletehours" -> handleDeleteHoursCommand(event);
+            case "clearhours" -> handleClearHoursCommand(event);
+            case "salary" -> handleSalaryCommand(event);
+            default -> event.reply("⚠️ Unknown command.").queue();
         }
-        
-        else if (event.getName().equals("totalhours")) {
+    }
+
+    private void handleAddHoursCommand(SlashCommandInteractionEvent event) {
+        if (event.getOption("day") == null || event.getOption("shiftstart") == null
+                || event.getOption("shiftend") == null) {
+            event.reply("⚠️ Please provide `day`, `shiftstart`, and `shiftend` in the format `DD.MM HH:mm HH:mm`.")
+                    .queue();
+            return;
+        }
+
+        try {
+            String dayInput = event.getOption("day").getAsString();
+            String shiftStartInput = event.getOption("shiftstart").getAsString();
+            String shiftEndInput = event.getOption("shiftend").getAsString();
+
+            int currentYear = LocalDate.now().getYear();
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm");
+
+            String formattedStart = dayInput + "." + currentYear + " " + shiftStartInput;
+            String formattedEnd = dayInput + "." + currentYear + " " + shiftEndInput;
+
+            LocalDateTime shiftStart = LocalDateTime.parse(formattedStart, formatter);
+            LocalDateTime shiftEnd = LocalDateTime.parse(formattedEnd, formatter);
+
+            if (shiftEnd.isBefore(shiftStart)) {
+                shiftEnd = shiftEnd.plusDays(1);
+            }
+
             String userId = event.getUser().getId();
-            long totalMinutes = workHoursRepository.getTotalMinutesWorked(userId);
-            long hours = totalMinutes / 60;
-            long minutes = totalMinutes % 60;
+            String username = event.getUser().getName();
+
+            WorkHours workHours = new WorkHours(userId, username, shiftStart, shiftEnd, LocalDateTime.now());
+            workHoursRepository.save(workHours);
+
+            event.reply("✅ Logged work hours for " + username + " on " + dayInput + " from " + shiftStartInput + " to "
+                    + shiftEndInput).queue();
+        } catch (Exception e) {
+            event.reply("⚠️ Invalid date format! Use `DD.MM HH:mm HH:mm`. Error: " + e.getMessage()).queue();
+        }
+    }
+
+    private void handleGetHoursCommand(SlashCommandInteractionEvent event) {
+        String userId = event.getUser().getId();
+        int month = LocalDate.now().getMonthValue(); 
+        int year = LocalDate.now().getYear();
     
-            event.reply("⏳ " + event.getUser().getName() + ", you have logged **" + hours + "h " + minutes + "m** of work.").queue();
-        }
-
-        else if (event.getName().equals("deletehours")) {
-            if (event.getOption("day") == null) {
-                event.reply("⚠️ Please provide the day in the format `DD.MM` (e.g., `26.02`).").queue();
+        if (event.getOption("month") != null) {
+            try {
+                month = Integer.parseInt(event.getOption("month").getAsString());
+                if (month < 1 || month > 12) {
+                    event.reply("⚠️ Invalid month! Please provide a number between 1 and 12.").queue();
+                    return;
+                }
+            } catch (NumberFormatException e) {
+                event.reply("⚠️ Invalid month format! Use a number (e.g., `2` for February).").queue();
                 return;
             }
-        
-            try {
-                String dayInput = event.getOption("day").getAsString();  // e.g., "26.02"
-                int currentYear = LocalDate.now().getYear();
-                
-                // Ensure correct parsing of user input
-                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy");
-                LocalDate dateToDelete = LocalDate.parse(dayInput + "." + currentYear, formatter);
-                
-                String userId = event.getUser().getId();
-                
-                System.out.println("Attempting to delete hours for date: " + dateToDelete);
-        
-                int deletedCount = workHoursRepository.deleteByUserIdAndDate(userId, dateToDelete);
-        
-                if (deletedCount > 0) {
-                    event.reply("🗑️ Deleted " + deletedCount + " work hour entries for " + dayInput + ".").queue();
-                } else {
-                    event.reply("⚠️ No work hours found for " + dayInput + ".").queue();
-                }
-            } catch (Exception e) {
-                event.reply("⚠️ Error: " + e.getMessage()).queue();
-                System.err.println("Error parsing date: " + e.getMessage());  
-            }
+        }
+    
+        Long totalMinutes = workHoursRepository.getTotalMinutesWorkedByMonth(userId, month, year);
+    
+        if (totalMinutes == null || totalMinutes == 0) {
+            event.reply("📅 " + event.getUser().getName() + ", you have no recorded work hours for **" + month + "/" + year + "**.").queue();
+            return;
+        }
+    
+        long hours = totalMinutes / 60;
+        long minutes = totalMinutes % 60;
+    
+        event.reply("⏳ " + event.getUser().getName() + ", you have logged **" + hours + "h " + minutes +
+                "m** of work in **" + month + "/" + year + "**.").queue();
+    }
+    
+
+    private void handleDeleteHoursCommand(SlashCommandInteractionEvent event) {
+        if (event.getOption("day") == null) {
+            event.reply("⚠️ Please provide the day in the format `DD.MM`.").queue();
+            return;
         }
 
-        else if (event.getName().equals("deleteallhours")) {
+        try {
+            String dayInput = event.getOption("day").getAsString();
+            int currentYear = LocalDate.now().getYear();
+
+            LocalDate dateToDelete = LocalDate.parse(dayInput + "." + currentYear,
+                    DateTimeFormatter.ofPattern("dd.MM.yyyy"));
+
             String userId = event.getUser().getId();
-            int deletedCount = workHoursRepository.deleteAllByUserId(userId);
-        
+            int deletedCount = workHoursRepository.deleteByUserIdAndDate(userId, dateToDelete);
+
             if (deletedCount > 0) {
-                event.reply("🗑️ Deleted all **" + deletedCount + "** work hour entries.").queue();
+                event.reply("🗑️ Deleted " + deletedCount + " work hour entries for " + dayInput + ".").queue();
             } else {
-                event.reply("⚠️ No work hours found to delete.").queue();
+                event.reply("⚠️ No work hours found for " + dayInput + ".").queue();
+            }
+        } catch (Exception e) {
+            event.reply("⚠️ Error parsing date. Please use `DD.MM`.").queue();
+        }
+    }
+
+    private void handleClearHoursCommand(SlashCommandInteractionEvent event) {
+        String userId = event.getUser().getId();
+        int deletedCount = workHoursRepository.deleteAllByUserId(userId);
+
+        if (deletedCount > 0) {
+            event.reply("🗑️ Deleted all **" + deletedCount + "** work hour entries.").queue();
+        } else {
+            event.reply("⚠️ No work hours found to delete.").queue();
+        }
+    }
+
+    private void handleSalaryCommand(SlashCommandInteractionEvent event) {
+        double hourlyRate = 30.50;
+        int month = LocalDate.now().getMonthValue(); 
+        int year = LocalDate.now().getYear();
+    
+        if (event.getOption("rate") != null) {
+            try {
+                hourlyRate = Double.parseDouble(event.getOption("rate").getAsString());
+            } catch (NumberFormatException e) {
+                event.reply("⚠️ Invalid hourly rate! Please provide a valid number.").queue();
+                return;
             }
         }
+    
+        if (event.getOption("month") != null) {
+            try {
+                month = Integer.parseInt(event.getOption("month").getAsString());
+                if (month < 1 || month > 12) {
+                    event.reply("⚠️ Invalid month! Please provide a number between 1 and 12.").queue();
+                    return;
+                }
+            } catch (NumberFormatException e) {
+                event.reply("⚠️ Invalid month format! Use a number (e.g., `2` for February).").queue();
+                return;
+            }
+        }
+    
+        String userId = event.getUser().getId();
+        Long totalMinutes = workHoursRepository.getTotalMinutesWorkedByMonth(userId, month, year);
         
+        if (totalMinutes == null || totalMinutes == 0) {
+            event.reply("📅 " + event.getUser().getName() + ", you have no recorded work hours for **" + month + "/" + year + "**.").queue();
+            return;
+        }
+    
+        double totalHours = totalMinutes / 60.0;
+        long hours = totalMinutes / 60;   
+        long minutes = totalMinutes % 60;
+
+        double salary = totalHours * hourlyRate;
+
+    
+        event.reply("💰 " + event.getUser().getName() + ", your estimated salary for **" + month + "/" + year +
+        "** is **" + String.format("%.2f", salary) + " PLN** based on **" +
+        hours + "h " + minutes + "m** worked.").queue();
     }
 }
